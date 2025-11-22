@@ -11,14 +11,24 @@ import {
     Pressable,
     ScrollView,
 } from "react-native";
+import { router } from "expo-router";
 import { useTheme } from "../../src/context/ThemeContext";
-import globalStyles, { formStyles, listStyles } from "../../src/styles/globalStyles";
+import globalStyles, {
+    formStyles,
+    listStyles,
+    themedStyles,
+} from "../../src/styles/globalStyles";
 import ThemeToggleButton from "../../src/components/ThemeToggleButton";
+import {
+    SkillBridgeIA,
+    type CvHtmlRequest,
+    type CvHtmlResponse,
+} from "../../src/services/skillbridgeAiApi";
 
 /* ============================================================================
-   Utils simples
-   ============================================================================ */
-const sanitize = (t: string) => (t ?? "").replace(/[“”"']/g, "").trim();
+// Utils simples
+============================================================================ */
+const sanitize = (t?: string) => (t ?? "").replace(/[“”"']/g, "").trim();
 const extractDigits = (t?: string) => (t ?? "").replace(/\D/g, "");
 
 const isValidEmail = (email?: string) => {
@@ -28,14 +38,15 @@ const isValidEmail = (email?: string) => {
 };
 
 /* ============================================================================
-   CurriculoScreen – formulário para montar dados do currículo
-   (sem i18n / sem API por enquanto)
-   ============================================================================ */
+// CurriculoScreen
+============================================================================ */
 export default function CurriculoScreen() {
     const { colors } = useTheme();
+    const themeStyles = themedStyles(colors);
 
     const [salvando, setSalvando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
+    const [htmlGerado, setHtmlGerado] = useState<string | null>(null);
 
     const [fieldErrors, setFieldErrors] = useState<{
         nome?: string;
@@ -67,12 +78,13 @@ export default function CurriculoScreen() {
 
     const tituloPagina = "📄 Montar Currículo";
 
-    /* ============================================================================
-       "Gerar" currículo (validação + Alert; no futuro chama API)
-       ============================================================================ */
+    /* ========================================================================
+       Gerar currículo chamando a API /gen/cv/html
+       ===================================================================== */
     const gerarCurriculo = async () => {
         setFieldErrors({});
         setErro(null);
+        setHtmlGerado(null);
 
         const nome = sanitize(form.nome);
         const email = sanitize(form.email);
@@ -107,7 +119,8 @@ export default function CurriculoScreen() {
         }
 
         if (!resumo || resumo.length < 10) {
-            newErrors.resumo = "Faça um breve resumo sobre você (mínimo 10 caracteres).";
+            newErrors.resumo =
+                "Faça um breve resumo sobre você (mínimo 10 caracteres).";
             hasError = true;
         }
 
@@ -126,26 +139,41 @@ export default function CurriculoScreen() {
 
         setSalvando(true);
         try {
-            const payload = {
-                nome,
-                email,
-                telefone: telefoneDigits,
-                cargoDesejado: cargo,
-                resumo,
-                experiencias,
-                formacao,
-                habilidades,
+            const payload: CvHtmlRequest = {
+                idioma: "pt-BR",
+                dados: {
+                    nome,
+                    email,
+                    telefone: telefoneDigits,
+                    cargoDesejado: cargo,
+                    resumo,
+                    experiencias,
+                    formacao,
+                    habilidades,
+                },
             };
 
-            console.log("Currículo (payload simulado):", payload);
+            console.log("📨 Enviando para /gen/cv/html:", payload);
 
-            // 👉 FUTURO: aqui você chama a API /gen/curriculo ou algo assim
+            const resp: CvHtmlResponse = await SkillBridgeIA.gerarCurriculoHtml(
+                payload
+            );
+
+            console.log("✅ Resposta /gen/cv/html (string HTML):", resp);
+
+            const html = resp || "";
+            setHtmlGerado(html);
+
             Alert.alert(
                 "Currículo gerado",
-                "Simulação: os dados do currículo foram estruturados. No próximo passo vamos integrar com a API."
+                "O currículo foi gerado. Toque em 'Ver currículo em tela cheia' para visualizar."
             );
         } catch (e: any) {
-            const msg = e?.message ?? "Falha ao gerar currículo.";
+            const msg =
+                e?.response?.data?.detail ||
+                e?.message ||
+                "Falha ao gerar currículo na API.";
+            console.log("❌ Erro ao chamar /gen/cv/html:", e);
             setErro(msg);
             Alert.alert("Erro", msg);
         } finally {
@@ -166,11 +194,30 @@ export default function CurriculoScreen() {
         });
         setFieldErrors({});
         setErro(null);
+        setHtmlGerado(null);
     };
 
-    /* ============================================================================
+    /* ========================================================================
+       Abrir preview em tela cheia (WebView em /cv-preview)
+       ===================================================================== */
+    const abrirPreview = () => {
+        if (!htmlGerado) {
+            Alert.alert(
+                "Prévia indisponível",
+                "Gere o currículo antes de abrir a visualização."
+            );
+            return;
+        }
+
+        router.push({
+            pathname: "/cv-preview",
+            params: { html: htmlGerado },
+        });
+    };
+
+    /* ========================================================================
        Render
-       ============================================================================ */
+       ===================================================================== */
     return (
         <SafeAreaView
             style={[globalStyles.container, { backgroundColor: colors.background }]}
@@ -179,6 +226,34 @@ export default function CurriculoScreen() {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
                 <ScrollView>
+
+                    {/* Botão Voltar */}
+                    <View style={{ marginBottom: 8 }}>
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Voltar para a tela anterior"
+                            android_ripple={{ color: colors.ripple }}
+                            onPress={() => router.back()}
+                            style={[
+                                globalStyles.button,
+                                themeStyles.btnSecondary,
+                                {
+                                    alignSelf: "flex-start",
+                                    paddingHorizontal: 18,
+                                    marginVertical: 0,
+                                },
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    globalStyles.buttonText,
+                                    themeStyles.btnSecondaryText,
+                                ]}
+                            >
+                                ← Voltar
+                            </Text>
+                        </Pressable>
+                    </View>
 
                     {/* Título */}
                     <Text style={[globalStyles.title, { color: colors.text }]}>
@@ -190,7 +265,7 @@ export default function CurriculoScreen() {
                             { color: colors.mutedText, textAlign: "center" },
                         ]}
                     >
-                        Preencha os dados abaixo para montar seu currículo.
+                        Preencha os dados abaixo para montar seu currículo com ajuda da IA.
                     </Text>
 
                     {/* Card do formulário */}
@@ -527,19 +602,20 @@ export default function CurriculoScreen() {
                             <Pressable
                                 accessibilityRole="button"
                                 accessibilityLabel="Gerar currículo"
-                                accessibilityHint="Valida os dados e monta o currículo para envio à API."
+                                accessibilityHint="Valida os dados e envia para a API de IA para gerar o currículo em HTML."
                                 android_ripple={{ color: colors.ripple }}
                                 disabled={salvando}
                                 style={[
                                     globalStyles.button,
-                                    { backgroundColor: colors.button },
+                                    listStyles.rowButton,
+                                    themeStyles.btnPrimary,
                                 ]}
                                 onPress={gerarCurriculo}
                             >
                                 <Text
                                     style={[
                                         globalStyles.buttonText,
-                                        { color: colors.buttonText },
+                                        themeStyles.btnPrimaryText,
                                     ]}
                                 >
                                     {salvando ? "Processando..." : "Gerar currículo"}
@@ -552,24 +628,60 @@ export default function CurriculoScreen() {
                                 android_ripple={{ color: colors.ripple }}
                                 style={[
                                     globalStyles.button,
-                                    {
-                                        backgroundColor: colors.surface,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                    },
+                                    listStyles.rowButton,
+                                    themeStyles.btnSecondary,
                                 ]}
                                 onPress={limpar}
                             >
                                 <Text
                                     style={[
                                         globalStyles.buttonText,
-                                        { color: colors.text },
+                                        themeStyles.btnSecondaryText,
                                     ]}
                                 >
                                     Limpar
                                 </Text>
                             </Pressable>
                         </View>
+
+                        {/* Mensagem + botão de preview */}
+                        {!!htmlGerado && (
+                            <View style={{ marginTop: 16 }}>
+                                <Text
+                                    style={[
+                                        globalStyles.text,
+                                        {
+                                            color: colors.mutedText,
+                                            marginBottom: 8,
+                                            textAlign: "center",
+                                        },
+                                    ]}
+                                >
+                                    Currículo gerado com sucesso! Toque no botão
+                                    abaixo para visualizar em tela cheia.
+                                </Text>
+
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Abrir currículo em tela cheia"
+                                    android_ripple={{ color: colors.ripple }}
+                                    onPress={abrirPreview}
+                                    style={[
+                                        globalStyles.button,
+                                        themeStyles.btnPrimary,
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            globalStyles.buttonText,
+                                            themeStyles.btnPrimaryText,
+                                        ]}
+                                    >
+                                        Ver currículo em tela cheia
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        )}
                     </View>
 
                     {/* Rodapé - Alternar tema */}

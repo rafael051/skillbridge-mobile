@@ -1,12 +1,10 @@
+// File: src/styles/globalStyles.ts
 import { StyleSheet, TextStyle, ViewStyle } from "react-native";
 
 /* ============================================================
 🎨 Global Styles — SkillBridge Mobile
-------------------------------------------------------------
-Centraliza estilos reutilizáveis do app.
 ============================================================ */
 
-// Tipagem explícita dos estilos principais
 interface GlobalStyles {
     hintText: TextStyle;
     container: ViewStyle;
@@ -17,7 +15,7 @@ interface GlobalStyles {
     buttonText: TextStyle;
 
     title: TextStyle;
-    subtitle: TextStyle;     // ✅ ADICIONADO
+    subtitle: TextStyle;
     text: TextStyle;
 
     card: ViewStyle;
@@ -49,6 +47,17 @@ interface GlobalStyles {
     homeTileIconWrap: ViewStyle;
     homeTileCount: TextStyle;
     homeTileLabel: TextStyle;
+
+    // Preview (Currículo / Explicação / Plano)
+    previewContainer: ViewStyle;
+    previewBody: ViewStyle;
+    previewHeader: ViewStyle;
+    previewHeaderBack: ViewStyle;
+    previewHeaderAction: ViewStyle;
+    previewBackText: TextStyle;
+    previewActionText: TextStyle;
+    previewLoader: ViewStyle;
+    webViewFull: ViewStyle;
 }
 
 const globalStyles = StyleSheet.create<GlobalStyles>({
@@ -139,15 +148,13 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         marginBottom: 20,
         textAlign: "center",
     },
-
-    subtitle: {              // ✅ ADICIONADO
+    subtitle: {
         fontSize: 18,
         fontWeight: "600",
         marginBottom: 12,
         textAlign: "center",
         opacity: 0.85,
     },
-
     text: {
         fontSize: 16,
         lineHeight: 22,
@@ -271,6 +278,54 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         lineHeight: 18,
         marginTop: 6,
     },
+
+    // ============================
+    // 🧾 Preview (Currículo / Explicação / Plano)
+    // ============================
+    previewContainer: {
+        flex: 1,
+        padding: 0,
+        justifyContent: "flex-start",
+    },
+    previewBody: {
+        flex: 1,
+    },
+    previewHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    previewHeaderBack: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 999,
+    },
+    previewHeaderAction: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 999,
+    },
+    previewBackText: {
+        marginLeft: 2,
+    },
+    previewActionText: {
+        marginLeft: 6,
+        fontSize: 14,
+    },
+    previewLoader: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    webViewFull: {
+        flex: 1,
+    },
 });
 
 export default globalStyles;
@@ -282,8 +337,13 @@ export const listStyles = StyleSheet.create({
     row: {
         flexDirection: "row",
         alignItems: "center",
+        justifyContent: "space-between",
         gap: 12,
-        flexWrap: "wrap",
+        marginTop: 8,
+    },
+    rowButton: {
+        flex: 1,
+        marginVertical: 0,
     },
     cardOutlined: {
         padding: 18,
@@ -352,13 +412,25 @@ export const themedStyles = (colors: any) =>
             textAlign: "center",
         },
 
+        // 🔹 Botão primário (azul)
         btnPrimary: {
-            backgroundColor: colors.primary ?? "#0EA5E9",
+            backgroundColor: colors.button ?? colors.primary ?? "#0EA5E9",
             borderWidth: 0,
             elevation: 2,
         },
         btnPrimaryText: {
-            color: colors.onPrimary ?? "#0F172A",
+            color: colors.buttonText ?? colors.onPrimary ?? "#F9FAFB",
+        },
+
+        // 🔹 Botão secundário (outline) — "Limpar"
+        btnSecondary: {
+            backgroundColor: "transparent",
+            borderWidth: 1,
+            borderColor: colors.button ?? colors.primary ?? "#0EA5E9",
+            elevation: 0,
+        },
+        btnSecondaryText: {
+            color: colors.button ?? colors.primary ?? "#0EA5E9",
         },
 
         btnWarning: {
@@ -385,5 +457,29 @@ export const themedStyles = (colors: any) =>
         homeTilePressed: { opacity: 0.92 },
         homeTileText: {
             color: colors.buttonText ?? "#FFFFFF",
+        },
+
+        // 🎨 Preview temática
+        previewBackground: {
+            backgroundColor: colors.background,
+        },
+        previewBackIcon: {
+            color: colors.text,
+        },
+        previewBackTextColor: {
+            color: colors.text,
+        },
+        previewHeaderActionPrimary: {
+            backgroundColor: colors.button,
+        },
+        previewActionIcon: {
+            color: colors.buttonText ?? "#FFFFFF",
+        },
+        previewActionTextColor: {
+            color: colors.buttonText ?? "#FFFFFF",
+        },
+        // 🔄 Cor do spinner do preview
+        previewLoaderSpinner: {
+            color: colors.button ?? colors.primary ?? "#0EA5E9",
         },
     });

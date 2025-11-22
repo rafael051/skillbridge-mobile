@@ -1,4 +1,4 @@
-// File: app/PlanoScreen.tsx
+// File: app/ia/PlanoScreen.tsx
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -11,21 +11,40 @@ import {
     Pressable,
     ScrollView,
 } from "react-native";
+import { router } from "expo-router";
 import { useTheme } from "../../src/context/ThemeContext";
-import globalStyles, { formStyles, listStyles } from "../../src/styles/globalStyles";
+import globalStyles, {
+    formStyles,
+    listStyles,
+    themedStyles,
+} from "../../src/styles/globalStyles";
 import ThemeToggleButton from "../../src/components/ThemeToggleButton";
 
-/* ============================================================================
-   Utils simples
-   ============================================================================ */
-const sanitize = (t: string) => (t ?? "").replace(/[“”"']/g, "").trim();
+import {
+    SkillBridgeIA,
+    type PlanRequest,
+    type PlanHtmlResponse, // <-- NOVO tipo (string) vindo da API
+} from "../../src/services/skillbridgeAiApi";
 
 /* ============================================================================
-   PlanoScreen – formulário para montar um plano de carreira / requalificação
-   (sem i18n / sem API por enquanto)
-   ============================================================================ */
+// Utils simples
+============================================================================ */
+const sanitize = (t?: string) => (t ?? "").replace(/[“”"']/g, "").trim();
+const extractDigits = (t?: string) => (t ?? "").replace(/\D/g, "");
+
+const splitList = (txt: string): string[] =>
+    txt
+        .split(/[;,]/)
+        .map((s) => sanitize(s))
+        .filter((s) => s.length > 0);
+
+/* ============================================================================
+// PlanoScreen – formulário para montar um plano de carreira / requalificação
+// (integrado com a API /gen/plan)
+============================================================================ */
 export default function PlanoScreen() {
     const { colors } = useTheme();
+    const themeStyles = themedStyles(colors);
 
     const [salvando, setSalvando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
@@ -64,14 +83,18 @@ export default function PlanoScreen() {
         observacoes: "",
     });
 
+    // HTML do plano retornado pela API (para abrir no preview)
+    const [htmlPlanoGerado, setHtmlPlanoGerado] = useState<string | null>(null);
+
     const tituloPagina = "📌 Plano de Carreira / Requalificação";
 
-    /* ============================================================================
-       "Gerar" plano (validação + Alert; no futuro chama API /gen/plan)
-       ============================================================================ */
+    /* ========================================================================
+       Gerar plano (validação + chamada API /gen/plan via SkillBridgeIA.gerarPlano)
+       ===================================================================== */
     const gerarPlano = async () => {
         setFieldErrors({});
         setErro(null);
+        setHtmlPlanoGerado(null);
 
         const idioma = sanitize(form.idioma) || "pt-BR";
         const nome = sanitize(form.nome);
@@ -144,34 +167,59 @@ export default function PlanoScreen() {
             return;
         }
 
+        // ----------------- Monta o PlanRequest alinhado com skillbridgeIaApi.ts -----------------
+        const disponibilidadeHorasStr = extractDigits(tempoDisponivel);
+        const disponibilidadeHoras = disponibilidadeHorasStr
+            ? Number(disponibilidadeHorasStr)
+            : undefined;
+
+        // Transformar alguns campos em listas simples para softSkills/hardSkills
+        const softSkills = splitList(pontoPartida); // coisas que a pessoa já faz / perfil
+        const hardSkills = splitList(areaInteresse); // áreas tecnológicas de interesse
+
+        const objetivoPerfil = [
+            `Nome: ${nome} (${idadeNum} anos)`,
+            `Ponto de partida: ${pontoPartida}`,
+            `Objetivo: ${objetivo}`,
+            `Área de interesse: ${areaInteresse}`,
+            `Nível atual: ${nivelAtual}`,
+            modoEstudo ? `Modo de estudo preferido: ${modoEstudo}` : "",
+            observacoes ? `Observações: ${observacoes}` : "",
+        ]
+            .filter(Boolean)
+            .join(" | ");
+
+        const payload: PlanRequest = {
+            idioma,
+            perfil: {
+                softSkills,
+                hardSkills,
+                objetivo: objetivoPerfil,
+                disponibilidadeSemanalHoras: disponibilidadeHoras,
+            },
+        };
+
         setSalvando(true);
         try {
-            const payload = {
-                idioma,
-                perfil: {
-                    nome,
-                    idade: idadeNum,
-                    pontoPartida,
-                    areaInteresse,
-                    nivelAtual,
-                },
-                objetivo,
-                disponibilidade: {
-                    tempoSemanal: tempoDisponivel,
-                    modoEstudo: modoEstudo || undefined,
-                },
-                observacoes: observacoes || undefined,
-            };
+            console.log("📨 Enviando para /gen/plan:", payload);
 
-            console.log("Plano de carreira (payload simulado):", payload);
+            // 👉 AGORA A API JÁ DEVOLVE HTML PRONTO
+            const html: PlanHtmlResponse = await SkillBridgeIA.gerarPlano(payload);
 
-            // 👉 FUTURO: aqui você chama a API /gen/plan
+            console.log("✅ HTML /gen/plan recebido, tamanho:", html?.length);
+
+            setHtmlPlanoGerado(html);
+
             Alert.alert(
-                "Plano estruturado",
-                "Simulação: os dados do plano de carreira foram montados. No próximo passo vamos integrar com a API."
+                "Plano gerado",
+                "Plano de carreira gerado pela API. Toque em 'Ver plano em tela cheia' para visualizar."
             );
         } catch (e: any) {
-            const msg = e?.message ?? "Falha ao gerar o plano.";
+            const msg =
+                e?.response?.data?.detail ||
+                e?.message ||
+                "Falha ao gerar o plano na API.";
+            console.log("❌ Erro ao chamar /gen/plan:", e);
             setErro(msg);
             Alert.alert("Erro", msg);
         } finally {
@@ -194,11 +242,30 @@ export default function PlanoScreen() {
         });
         setFieldErrors({});
         setErro(null);
+        setHtmlPlanoGerado(null);
     };
 
-    /* ============================================================================
+    /* ========================================================================
+       Abrir preview em tela cheia (WebView em /ia/plan-preview)
+       ===================================================================== */
+    const abrirPreview = () => {
+        if (!htmlPlanoGerado) {
+            Alert.alert(
+                "Prévia indisponível",
+                "Gere o plano antes de abrir a visualização."
+            );
+            return;
+        }
+
+        router.push({
+            pathname: "/ia/plan-preview",
+            params: { html: htmlPlanoGerado },
+        });
+    };
+
+    /* ========================================================================
        Render
-       ============================================================================ */
+       ===================================================================== */
     return (
         <SafeAreaView
             style={[globalStyles.container, { backgroundColor: colors.background }]}
@@ -207,6 +274,34 @@ export default function PlanoScreen() {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
                 <ScrollView>
+
+                    {/* Botão Voltar */}
+                    <View style={{ marginBottom: 8 }}>
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Voltar para a tela anterior"
+                            android_ripple={{ color: colors.ripple }}
+                            onPress={() => router.back()}
+                            style={[
+                                globalStyles.button,
+                                themeStyles.btnSecondary,
+                                {
+                                    alignSelf: "flex-start",
+                                    paddingHorizontal: 18,
+                                    marginVertical: 0,
+                                },
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    globalStyles.buttonText,
+                                    themeStyles.btnSecondaryText,
+                                ]}
+                            >
+                                ← Voltar
+                            </Text>
+                        </Pressable>
+                    </View>
 
                     {/* Título */}
                     <Text style={[globalStyles.title, { color: colors.text }]}>
@@ -455,7 +550,7 @@ export default function PlanoScreen() {
                                 Área de interesse
                             </Text>
                             <TextInput
-                                placeholder="Ex.: Desenvolvimento backend, dados, nuvem, mobile..."
+                                placeholder="Ex.: Desenvolvimento backend, dados, nuvem, mobile... (separe por vírgula)"
                                 placeholderTextColor={colors.mutedText}
                                 value={form.areaInteresse}
                                 onChangeText={(v) =>
@@ -632,19 +727,20 @@ export default function PlanoScreen() {
                             <Pressable
                                 accessibilityRole="button"
                                 accessibilityLabel="Gerar plano de carreira"
-                                accessibilityHint="Valida os dados e monta o payload para envio à API de plano."
+                                accessibilityHint="Valida os dados e envia para a API de plano."
                                 android_ripple={{ color: colors.ripple }}
                                 disabled={salvando}
                                 style={[
                                     globalStyles.button,
-                                    { backgroundColor: colors.button },
+                                    listStyles.rowButton,
+                                    themeStyles.btnPrimary,
                                 ]}
                                 onPress={gerarPlano}
                             >
                                 <Text
                                     style={[
                                         globalStyles.buttonText,
-                                        { color: colors.buttonText },
+                                        themeStyles.btnPrimaryText,
                                     ]}
                                 >
                                     {salvando ? "Processando..." : "Gerar plano"}
@@ -657,24 +753,60 @@ export default function PlanoScreen() {
                                 android_ripple={{ color: colors.ripple }}
                                 style={[
                                     globalStyles.button,
-                                    {
-                                        backgroundColor: colors.surface,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                    },
+                                    listStyles.rowButton,
+                                    themeStyles.btnSecondary,
                                 ]}
                                 onPress={limpar}
                             >
                                 <Text
                                     style={[
                                         globalStyles.buttonText,
-                                        { color: colors.text },
+                                        themeStyles.btnSecondaryText,
                                     ]}
                                 >
                                     Limpar
                                 </Text>
                             </Pressable>
                         </View>
+
+                        {/* Mensagem + botão de preview */}
+                        {!!htmlPlanoGerado && (
+                            <View style={{ marginTop: 16 }}>
+                                <Text
+                                    style={[
+                                        globalStyles.text,
+                                        {
+                                            color: colors.mutedText,
+                                            marginBottom: 8,
+                                            textAlign: "center",
+                                        },
+                                    ]}
+                                >
+                                    Plano gerado com sucesso! Toque no botão
+                                    abaixo para visualizar em tela cheia.
+                                </Text>
+
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Abrir plano em tela cheia"
+                                    android_ripple={{ color: colors.ripple }}
+                                    onPress={abrirPreview}
+                                    style={[
+                                        globalStyles.button,
+                                        themeStyles.btnPrimary,
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            globalStyles.buttonText,
+                                            themeStyles.btnPrimaryText,
+                                        ]}
+                                    >
+                                        Ver plano em tela cheia
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        )}
                     </View>
 
                     {/* Rodapé - Alternar tema */}

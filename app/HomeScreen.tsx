@@ -38,13 +38,14 @@ export default function HomeScreen(): JSX.Element {
     const { colors } = useTheme();
     const t = themedStyles(colors);
 
-    // 🔐 Logoff simples
+    /* =========================
+       Autenticação / conta
+    ========================= */
     const realizarLogoff = async () => {
         await AsyncStorage.removeItem("@user");
         router.replace("/");
     };
 
-    // 🗑️ Excluir conta Firebase
     const excluirConta = () => {
         Alert.alert(
             "Confirmar Exclusão",
@@ -120,11 +121,12 @@ export default function HomeScreen(): JSX.Element {
                         </View>
                     </View>
 
-                    {/* Grid de Módulos (sem API ainda) */}
+                    {/* Grid de Módulos */}
                     <View style={globalStyles.homeGrid}>
+                        {/* .NET CRUD principal (só navegação, sem contadores) */}
                         <Tile
                             label="Clientes"
-                            onPress={() => router.push("/clientes")}
+                            onPress={() => router.push("/clients")}
                             Icon={() => (
                                 <Feather
                                     name="user"
@@ -161,12 +163,13 @@ export default function HomeScreen(): JSX.Element {
                             t={t}
                         />
 
+                        {/* IA – endpoints da API FastAPI */}
                         <Tile
-                            label="IA (Currículo / Plano)"
+                            label="IA Currículo"
                             onPress={() => router.push("/ia/CurriculoScreen")}
                             Icon={() => (
                                 <MaterialCommunityIcons
-                                    name="robot-outline"
+                                    name="file-document-edit-outline"
                                     size={28}
                                     color={colors.buttonText ?? "#fff"}
                                 />
@@ -174,6 +177,36 @@ export default function HomeScreen(): JSX.Element {
                             t={t}
                         />
 
+                        <Tile
+                            label="IA Plano"
+                            onPress={() => router.push("/ia/PlanoScreen")}
+                            Icon={() => (
+                                <MaterialCommunityIcons
+                                    name="school-outline"
+                                    size={28}
+                                    color={colors.buttonText ?? "#fff"}
+                                />
+                            )}
+                            t={t}
+                        />
+
+                        <Tile
+                            label="IA Explain"
+                            onPress={() => router.push("/ia/ExplainScreen")}
+                            Icon={() => (
+                                <Feather
+                                    name="message-circle"
+                                    size={28}
+                                    color={colors.buttonText ?? "#fff"}
+                                />
+                            )}
+                            t={t}
+                        />
+
+
+
+
+                        {/* Sobre */}
                         <Tile
                             label="Sobre"
                             onPress={() => router.push("/sobre")}

@@ -1,4 +1,4 @@
-// File: app/ExplainScreen.tsx
+// File: app/ia/ExplainScreen.tsx
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -11,24 +11,37 @@ import {
     Pressable,
     ScrollView,
 } from "react-native";
+import { router } from "expo-router";
 import { useTheme } from "../../src/context/ThemeContext";
-import globalStyles, { formStyles, listStyles } from "../../src/styles/globalStyles";
+import globalStyles, {
+    formStyles,
+    listStyles,
+    themedStyles,
+} from "../../src/styles/globalStyles";
 import ThemeToggleButton from "../../src/components/ThemeToggleButton";
 
-/* ============================================================================
-   Utils simples
-   ============================================================================ */
-const sanitize = (t: string) => (t ?? "").replace(/[“”"']/g, "").trim();
+import {
+    SkillBridgeIA,
+    type ExplainRequest,
+    type ExplainHtmlResponse,
+} from "../../src/services/skillbridgeAiApi";
 
 /* ============================================================================
-   ExplainScreen – formulário para montar dados da explicação humanizada
-   (sem i18n / sem API por enquanto)
-   ============================================================================ */
+// Utils simples
+============================================================================ */
+const sanitize = (t?: string) => (t ?? "").replace(/[“”"']/g, "").trim();
+
+/* ============================================================================
+// ExplainScreen – formulário para montar dados da explicação humanizada
+// (integrado com /gen/explain/html)
+============================================================================ */
 export default function ExplainScreen() {
     const { colors } = useTheme();
+    const themeStyles = themedStyles(colors);
 
     const [salvando, setSalvando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
+    const [htmlGerado, setHtmlGerado] = useState<string | null>(null);
 
     const [fieldErrors, setFieldErrors] = useState<{
         idioma?: string;
@@ -56,12 +69,13 @@ export default function ExplainScreen() {
 
     const tituloPagina = "🧠 Explicação Humanizada (Coach)";
 
-    /* ============================================================================
-       "Gerar" explicação (validação + Alert; no futuro chama API /gen/explain)
-       ============================================================================ */
+    /* ========================================================================
+       Gerar explicação chamando a API /gen/explain/html
+       ===================================================================== */
     const gerarExplicacao = async () => {
         setFieldErrors({});
         setErro(null);
+        setHtmlGerado(null);
 
         const idioma = sanitize(form.idioma) || "pt-BR";
         const tipo = sanitize(form.tipo);
@@ -115,7 +129,7 @@ export default function ExplainScreen() {
 
         setSalvando(true);
         try {
-            const payload = {
+            const payload: ExplainRequest = {
                 idioma,
                 contexto: {
                     tipo,
@@ -128,15 +142,26 @@ export default function ExplainScreen() {
                 },
             };
 
-            console.log("Explain payload (simulado):", payload);
+            console.log("📨 Enviando para /gen/explain/html:", payload);
 
-            // 👉 FUTURO: aqui você chama a API /gen/explain
+            const resp: ExplainHtmlResponse =
+                await SkillBridgeIA.gerarExplainHtml(payload);
+
+            console.log("✅ Resposta /gen/explain/html (string HTML):", resp);
+
+            const html = resp || "";
+            setHtmlGerado(html);
+
             Alert.alert(
-                "Explicação estruturada",
-                "Simulação: o payload da explicação foi montado. No próximo passo vamos integrar com a API."
+                "Explicação gerada",
+                "A explicação foi gerada. Toque em 'Ver explicação em tela cheia' para visualizar/imprimir."
             );
         } catch (e: any) {
-            const msg = e?.message ?? "Falha ao gerar a explicação.";
+            const msg =
+                e?.response?.data?.detail ||
+                e?.message ||
+                "Falha ao gerar a explicação na API.";
+            console.log("❌ Erro ao chamar /gen/explain/html:", e);
             setErro(msg);
             Alert.alert("Erro", msg);
         } finally {
@@ -155,11 +180,30 @@ export default function ExplainScreen() {
         });
         setFieldErrors({});
         setErro(null);
+        setHtmlGerado(null);
     };
 
-    /* ============================================================================
+    /* ========================================================================
+       Abrir preview em tela cheia (WebView em /ia/explain-preview)
+       ===================================================================== */
+    const abrirPreview = () => {
+        if (!htmlGerado) {
+            Alert.alert(
+                "Prévia indisponível",
+                "Gere a explicação antes de abrir a visualização."
+            );
+            return;
+        }
+
+        router.push({
+            pathname: "/ia/explain-preview",
+            params: { html: htmlGerado },
+        });
+    };
+
+    /* ========================================================================
        Render
-       ============================================================================ */
+       ===================================================================== */
     return (
         <SafeAreaView
             style={[globalStyles.container, { backgroundColor: colors.background }]}
@@ -168,6 +212,34 @@ export default function ExplainScreen() {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
                 <ScrollView>
+
+                    {/* Botão Voltar (mesmo padrão do CurriculoScreen) */}
+                    <View style={{ marginBottom: 8 }}>
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Voltar para a tela anterior"
+                            android_ripple={{ color: colors.ripple }}
+                            onPress={() => router.back()}
+                            style={[
+                                globalStyles.button,
+                                themeStyles.btnSecondary,
+                                {
+                                    alignSelf: "flex-start",
+                                    paddingHorizontal: 18,
+                                    marginVertical: 0,
+                                },
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    globalStyles.buttonText,
+                                    themeStyles.btnSecondaryText,
+                                ]}
+                            >
+                                ← Voltar
+                            </Text>
+                        </Pressable>
+                    </View>
 
                     {/* Título */}
                     <Text style={[globalStyles.title, { color: colors.text }]}>
@@ -179,8 +251,8 @@ export default function ExplainScreen() {
                             { color: colors.mutedText, textAlign: "center" },
                         ]}
                     >
-                        Preencha os dados abaixo para gerar uma explicação humanizada
-                        (coach) baseada no perfil da pessoa.
+                        Preencha os dados abaixo para gerar uma explicação
+                        humanizada (coach) baseada no perfil da pessoa.
                     </Text>
 
                     {/* Card do formulário */}
@@ -454,19 +526,20 @@ export default function ExplainScreen() {
                             <Pressable
                                 accessibilityRole="button"
                                 accessibilityLabel="Gerar explicação humanizada"
-                                accessibilityHint="Valida os dados e monta o payload para envio à API de explicação."
+                                accessibilityHint="Valida os dados e envia para a API de explicação."
                                 android_ripple={{ color: colors.ripple }}
                                 disabled={salvando}
                                 style={[
                                     globalStyles.button,
-                                    { backgroundColor: colors.button },
+                                    listStyles.rowButton,
+                                    themeStyles.btnPrimary,
                                 ]}
                                 onPress={gerarExplicacao}
                             >
                                 <Text
                                     style={[
                                         globalStyles.buttonText,
-                                        { color: colors.buttonText },
+                                        themeStyles.btnPrimaryText,
                                     ]}
                                 >
                                     {salvando
@@ -481,24 +554,60 @@ export default function ExplainScreen() {
                                 android_ripple={{ color: colors.ripple }}
                                 style={[
                                     globalStyles.button,
-                                    {
-                                        backgroundColor: colors.surface,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                    },
+                                    listStyles.rowButton,
+                                    themeStyles.btnSecondary,
                                 ]}
                                 onPress={limpar}
                             >
                                 <Text
                                     style={[
                                         globalStyles.buttonText,
-                                        { color: colors.text },
+                                        themeStyles.btnSecondaryText,
                                     ]}
                                 >
                                     Limpar
                                 </Text>
                             </Pressable>
                         </View>
+
+                        {/* Mensagem + botão de preview */}
+                        {!!htmlGerado && (
+                            <View style={{ marginTop: 16 }}>
+                                <Text
+                                    style={[
+                                        globalStyles.text,
+                                        {
+                                            color: colors.mutedText,
+                                            marginBottom: 8,
+                                            textAlign: "center",
+                                        },
+                                    ]}
+                                >
+                                    Explicação gerada com sucesso! Toque no botão
+                                    abaixo para visualizar/imprimir em tela cheia.
+                                </Text>
+
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Abrir explicação em tela cheia"
+                                    android_ripple={{ color: colors.ripple }}
+                                    onPress={abrirPreview}
+                                    style={[
+                                        globalStyles.button,
+                                        themeStyles.btnPrimary,
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            globalStyles.buttonText,
+                                            themeStyles.btnPrimaryText,
+                                        ]}
+                                    >
+                                        Ver explicação em tela cheia
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        )}
                     </View>
 
                     {/* Rodapé - Alternar tema */}
