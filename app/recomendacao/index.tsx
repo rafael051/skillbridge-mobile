@@ -12,14 +12,18 @@ import {
     ScrollView,
     FlatList,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useTheme } from "../../src/context/ThemeContext";
-import globalStyles, { formStyles, listStyles } from "../../src/styles/globalStyles";
+import globalStyles, {
+    formStyles,
+    listStyles,
+    themedStyles,
+} from "../../src/styles/globalStyles";
 import ThemeToggleButton from "../../src/components/ThemeToggleButton";
 
 /* ============================================================================
    Utils simples
    ============================================================================ */
-const sanitize = (t: string) => (t ?? "").replace(/[“”"']/g, "").trim();
 const extractDigits = (t?: string) => (t ?? "").replace(/\D/g, "");
 
 /* ============================================================================
@@ -40,6 +44,8 @@ type JobRecommendation = {
    ============================================================================ */
 export default function RecomendacaoScreen() {
     const { colors } = useTheme();
+    const themeStyles = themedStyles(colors);
+    const router = useRouter();
 
     const [salvando, setSalvando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
@@ -160,39 +166,52 @@ export default function RecomendacaoScreen() {
        Render item da lista
        ============================================================================ */
     const renderItem = ({ item }: { item: JobRecommendation }) => (
-        <View
-            style={[
-                listStyles.rowItem,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-        >
-            <View style={{ flex: 1 }}>
+        <View style={[listStyles.rowItem, themeStyles.jobsCardContainer]}>
+            <View style={listStyles.rowItemTextCol}>
                 <Text
                     style={[
                         globalStyles.cardPlaca,
-                        { color: colors.text, marginBottom: 4 },
+                        themeStyles.jobsCardTitleText,
+                        globalStyles.textSmallMargin,
                     ]}
                 >
                     #{item.id} • {item.titulo}
                 </Text>
-                <Text style={[globalStyles.text, { color: colors.mutedText }]}>
+
+                <Text
+                    style={[
+                        globalStyles.text,
+                        themeStyles.jobsCardTextStrong,
+                        globalStyles.textSmallMargin,
+                    ]}
+                >
                     Empresa: {item.empresa}
                 </Text>
+
                 {!!item.score && (
-                    <Text style={[globalStyles.text, { color: colors.mutedText }]}>
+                    <Text
+                        style={[
+                            globalStyles.text,
+                            themeStyles.jobsCardTextMuted,
+                            globalStyles.textSmallMargin,
+                        ]}
+                    >
                         Score: {(item.score * 100).toFixed(1)}%
                     </Text>
                 )}
+
                 <Text
-                    style={[globalStyles.text, { color: colors.mutedText }]}
+                    style={[
+                        globalStyles.text,
+                        themeStyles.jobsCardTextMuted,
+                    ]}
                     numberOfLines={2}
                 >
                     Requisitos: {item.requisitos}
                 </Text>
             </View>
 
-            {/* Ações por vaga (mock) */}
-            <View style={{ gap: 8 }}>
+            <View style={listStyles.rowActions}>
                 <Pressable
                     android_ripple={{ color: colors.ripple }}
                     onPress={() =>
@@ -201,15 +220,16 @@ export default function RecomendacaoScreen() {
                             `Vaga #${item.id}: ${item.titulo}\nEmpresa: ${item.empresa}\n\nRequisitos:\n${item.requisitos}`
                         )
                     }
-                    style={[
-                        listStyles.smallBtn,
-                        {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border,
-                        },
-                    ]}
+                    style={[listStyles.smallBtn, themeStyles.jobsCardEditBtn]}
                 >
-                    <Text style={{ color: colors.text }}>Ver detalhes</Text>
+                    <Text
+                        style={[
+                            globalStyles.smallButtonText,
+                            themeStyles.jobsCardEditText,
+                        ]}
+                    >
+                        Ver detalhes
+                    </Text>
                 </Pressable>
 
                 <Pressable
@@ -220,15 +240,16 @@ export default function RecomendacaoScreen() {
                             `Aqui poderíamos abrir um fluxo de candidatura para a vaga #${item.id}.`
                         )
                     }
-                    style={[
-                        listStyles.smallBtnDanger,
-                        {
-                            backgroundColor: colors.button,
-                            borderColor: colors.button,
-                        },
-                    ]}
+                    style={[listStyles.smallBtn, themeStyles.jobsCardDeleteBtn]}
                 >
-                    <Text style={{ color: colors.buttonText }}>Candidatar</Text>
+                    <Text
+                        style={[
+                            globalStyles.smallButtonText,
+                            themeStyles.jobsCardDeleteText,
+                        ]}
+                    >
+                        Candidatar
+                    </Text>
                 </Pressable>
             </View>
         </View>
@@ -241,235 +262,264 @@ export default function RecomendacaoScreen() {
        ============================================================================ */
     return (
         <SafeAreaView
-            style={[globalStyles.container, { backgroundColor: colors.background }]}
+            style={[
+                globalStyles.container,
+                globalStyles.screenTop,
+                themeStyles.screenBackground,
+            ]}
         >
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={globalStyles.screenFill}
             >
-                <ScrollView>
-                    {/* Título */}
-                    <Text style={[globalStyles.title, { color: colors.text }]}>
-                        {tituloPagina}
-                    </Text>
-                    <Text
-                        style={[
-                            globalStyles.text,
-                            { color: colors.mutedText, textAlign: "center" },
-                        ]}
-                    >
-                        Informe o ID do cliente e a quantidade máxima de vagas
-                        recomendadas (TopN). No backend, isso conversa com
-                        {" "}
-                        GET /api/v1/recomendacao/jobs/{"{clienteId}"}.
-                    </Text>
-
-                    {/* Card de filtros / parâmetros */}
-                    <View
-                        style={[
-                            formStyles.card,
-                            {
-                                backgroundColor: colors.surface,
-                                borderColor: colors.border,
-                            },
-                        ]}
-                    >
-                        {!!erro && (
-                            <Text
-                                style={[
-                                    globalStyles.text,
-                                    { color: colors.dangerBorder, marginBottom: 8 },
-                                ]}
-                            >
-                                {erro}
-                            </Text>
-                        )}
-
-                        {/* Cliente ID */}
-                        <View style={globalStyles.inputContainer}>
-                            <Text
-                                style={[
-                                    globalStyles.inputLabel,
-                                    { color: colors.mutedText },
-                                ]}
-                            >
-                                ID do cliente
-                            </Text>
-                            <TextInput
-                                placeholder="Ex.: 1"
-                                placeholderTextColor={colors.mutedText}
-                                value={form.clienteId}
-                                keyboardType="numeric"
-                                onChangeText={(v) =>
-                                    setForm((s) => ({ ...s, clienteId: v }))
-                                }
-                                editable={!salvando}
-                                style={[
-                                    globalStyles.input,
-                                    {
-                                        borderColor: fieldErrors.clienteId
-                                            ? colors.dangerBorder
-                                            : colors.border,
-                                        color: colors.text,
-                                        backgroundColor: colors.surface,
-                                    },
-                                ]}
-                            />
-                            {!!fieldErrors.clienteId && (
-                                <Text
-                                    style={[
-                                        globalStyles.text,
-                                        { color: colors.dangerBorder },
-                                    ]}
-                                >
-                                    {fieldErrors.clienteId}
-                                </Text>
-                            )}
-                        </View>
-
-                        {/* TopN */}
-                        <View style={globalStyles.inputContainer}>
-                            <Text
-                                style={[
-                                    globalStyles.inputLabel,
-                                    { color: colors.mutedText },
-                                ]}
-                            >
-                                TopN (quantidade máxima de vagas)
-                            </Text>
-                            <TextInput
-                                placeholder="Ex.: 5"
-                                placeholderTextColor={colors.mutedText}
-                                value={form.topN}
-                                keyboardType="numeric"
-                                onChangeText={(v) =>
-                                    setForm((s) => ({ ...s, topN: v }))
-                                }
-                                editable={!salvando}
-                                style={[
-                                    globalStyles.input,
-                                    {
-                                        borderColor: fieldErrors.topN
-                                            ? colors.dangerBorder
-                                            : colors.border,
-                                        color: colors.text,
-                                        backgroundColor: colors.surface,
-                                    },
-                                ]}
-                            />
-                            {!!fieldErrors.topN && (
-                                <Text
-                                    style={[
-                                        globalStyles.text,
-                                        { color: colors.dangerBorder },
-                                    ]}
-                                >
-                                    {fieldErrors.topN}
-                                </Text>
-                            )}
-                        </View>
-
-                        {/* Ações de filtro */}
-                        <View style={listStyles.row}>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={globalStyles.homeScrollContent}
+                >
+                    <View style={globalStyles.authContainer}>
+                        {/* Botão Voltar */}
+                        <View
+                            style={[
+                                listStyles.row,
+                                { justifyContent: "flex-start" },
+                            ]}
+                        >
                             <Pressable
                                 accessibilityRole="button"
-                                accessibilityLabel="Buscar recomendações"
-                                accessibilityHint="Valida os dados e busca as vagas recomendadas (simulação)."
+                                accessibilityLabel="Voltar para a tela inicial"
                                 android_ripple={{ color: colors.ripple }}
-                                disabled={salvando}
                                 style={[
                                     globalStyles.button,
-                                    { backgroundColor: colors.button },
+                                    listStyles.topButton,
+                                    themeStyles.btnSecondary,
                                 ]}
-                                onPress={buscarRecomendacoes}
+                                onPress={() => router.back()}
                             >
                                 <Text
                                     style={[
                                         globalStyles.buttonText,
-                                        { color: colors.buttonText },
+                                        themeStyles.btnSecondaryText,
                                     ]}
                                 >
-                                    {salvando
-                                        ? "Buscando..."
-                                        : "Buscar recomendações"}
-                                </Text>
-                            </Pressable>
-
-                            <Pressable
-                                accessibilityRole="button"
-                                accessibilityLabel="Limpar filtros e lista"
-                                android_ripple={{ color: colors.ripple }}
-                                style={[
-                                    globalStyles.button,
-                                    {
-                                        backgroundColor: colors.surface,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                    },
-                                ]}
-                                onPress={limpar}
-                            >
-                                <Text
-                                    style={[
-                                        globalStyles.buttonText,
-                                        { color: colors.text },
-                                    ]}
-                                >
-                                    Limpar
+                                    Voltar
                                 </Text>
                             </Pressable>
                         </View>
-                    </View>
 
-                    {/* Lista de recomendações */}
-                    <View
-                        style={[
-                            listStyles.cardOutlined,
-                            {
-                                backgroundColor: colors.surface,
-                                borderColor: colors.border,
-                            },
-                        ]}
-                    >
+                        {/* Título */}
+                        <Text
+                            style={[
+                                globalStyles.title,
+                                themeStyles.titleText,
+                                globalStyles.textSmallMargin,
+                            ]}
+                        >
+                            {tituloPagina}
+                        </Text>
+
                         <Text
                             style={[
                                 globalStyles.text,
-                                {
-                                    color: colors.mutedText,
-                                    marginBottom: 8,
-                                    textAlign: "left",
-                                },
+                                themeStyles.mutedText,
+                                globalStyles.textCenter,
                             ]}
                         >
-                            Resultados de recomendação:
+                            Informe o ID do cliente e a quantidade máxima de
+                            vagas recomendadas (TopN). No backend, isso conversa
+                            com GET&nbsp;/api/v1/recomendacao/jobs/
+                            {"{clienteId}"}.
                         </Text>
 
-                        <FlatList
-                            data={recomendacoes}
-                            keyExtractor={keyExtractor}
-                            ItemSeparatorComponent={() => (
-                                <View style={{ height: 10 }} />
-                            )}
-                            ListEmptyComponent={
+                        {/* Card de filtros / parâmetros */}
+                        <View
+                            style={[
+                                formStyles.card,
+                                themeStyles.formCard,
+                            ]}
+                        >
+                            {!!erro && (
                                 <Text
                                     style={[
                                         globalStyles.text,
-                                        {
-                                            color: colors.mutedText,
-                                            textAlign: "center",
-                                        },
+                                        themeStyles.errorText,
                                     ]}
                                 >
-                                    Nenhuma recomendação carregada. Informe o
-                                    cliente e clique em "Buscar recomendações".
+                                    {erro}
                                 </Text>
-                            }
-                            renderItem={renderItem}
-                        />
-                    </View>
+                            )}
 
-                    {/* Rodapé - Alternar tema */}
-                    <View style={globalStyles.homeFooter}>
-                        <ThemeToggleButton />
+                            {/* Cliente ID */}
+                            <View style={globalStyles.inputContainer}>
+                                <Text
+                                    style={[
+                                        globalStyles.inputLabel,
+                                        themeStyles.mutedText,
+                                    ]}
+                                >
+                                    ID do cliente
+                                </Text>
+                                <TextInput
+                                    placeholder="Ex.: 1"
+                                    placeholderTextColor={colors.mutedText}
+                                    value={form.clienteId}
+                                    keyboardType="numeric"
+                                    onChangeText={(v) =>
+                                        setForm((s) => ({ ...s, clienteId: v }))
+                                    }
+                                    editable={!salvando}
+                                    style={[
+                                        globalStyles.input,
+                                        themeStyles.inputBase,
+                                        fieldErrors.clienteId &&
+                                        themeStyles.inputError,
+                                    ]}
+                                />
+                                {!!fieldErrors.clienteId && (
+                                    <Text
+                                        style={[
+                                            globalStyles.text,
+                                            themeStyles.errorText,
+                                        ]}
+                                    >
+                                        {fieldErrors.clienteId}
+                                    </Text>
+                                )}
+                            </View>
+
+                            {/* TopN */}
+                            <View style={globalStyles.inputContainer}>
+                                <Text
+                                    style={[
+                                        globalStyles.inputLabel,
+                                        themeStyles.mutedText,
+                                    ]}
+                                >
+                                    TopN (quantidade máxima de vagas)
+                                </Text>
+                                <TextInput
+                                    placeholder="Ex.: 5"
+                                    placeholderTextColor={colors.mutedText}
+                                    value={form.topN}
+                                    keyboardType="numeric"
+                                    onChangeText={(v) =>
+                                        setForm((s) => ({ ...s, topN: v }))
+                                    }
+                                    editable={!salvando}
+                                    style={[
+                                        globalStyles.input,
+                                        themeStyles.inputBase,
+                                        fieldErrors.topN &&
+                                        themeStyles.inputError,
+                                    ]}
+                                />
+                                {!!fieldErrors.topN && (
+                                    <Text
+                                        style={[
+                                            globalStyles.text,
+                                            themeStyles.errorText,
+                                        ]}
+                                    >
+                                        {fieldErrors.topN}
+                                    </Text>
+                                )}
+                            </View>
+
+                            {/* Ações de filtro */}
+                            <View style={listStyles.row}>
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Buscar recomendações"
+                                    accessibilityHint="Valida os dados e busca as vagas recomendadas (simulação)."
+                                    android_ripple={{ color: colors.ripple }}
+                                    disabled={salvando}
+                                    style={[
+                                        globalStyles.button,
+                                        listStyles.topButton,
+                                        themeStyles.btnPrimary,
+                                    ]}
+                                    onPress={buscarRecomendacoes}
+                                >
+                                    <Text
+                                        style={[
+                                            globalStyles.buttonText,
+                                            themeStyles.btnPrimaryText,
+                                        ]}
+                                    >
+                                        {salvando ? "Buscando..." : "Buscar"}
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Limpar filtros e lista"
+                                    android_ripple={{ color: colors.ripple }}
+                                    style={[
+                                        globalStyles.button,
+                                        listStyles.topButton,
+                                        themeStyles.btnSecondary,
+                                    ]}
+                                    onPress={limpar}
+                                >
+                                    <Text
+                                        style={[
+                                            globalStyles.buttonText,
+                                            themeStyles.btnSecondaryText,
+                                        ]}
+                                    >
+                                        Limpar
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        </View>
+
+                        {/* Lista de recomendações */}
+                        <View
+                            style={[
+                                listStyles.cardOutlined,
+                                themeStyles.jobsListCard,
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    globalStyles.text,
+                                    themeStyles.mutedText,
+                                    listStyles.resultLabel,
+                                ]}
+                            >
+                                Resultados de recomendação:
+                            </Text>
+
+                            <FlatList
+                                data={recomendacoes}
+                                keyExtractor={keyExtractor}
+                                ItemSeparatorComponent={() => (
+                                    <View style={listStyles.listSeparator} />
+                                )}
+                                ListEmptyComponent={
+                                    <Text
+                                        style={[
+                                            globalStyles.text,
+                                            themeStyles.mutedText,
+                                            globalStyles.textCenter,
+                                        ]}
+                                    >
+                                        Nenhuma recomendação carregada. Informe
+                                        o cliente e clique em "Buscar".
+                                    </Text>
+                                }
+                                contentContainerStyle={
+                                    recomendacoes.length === 0
+                                        ? listStyles.listContentEmpty
+                                        : listStyles.listContent
+                                }
+                                renderItem={renderItem}
+                            />
+                        </View>
+
+                        {/* Rodapé - Alternar tema */}
+                        <View style={globalStyles.homeFooter}>
+                            <ThemeToggleButton />
+                        </View>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>

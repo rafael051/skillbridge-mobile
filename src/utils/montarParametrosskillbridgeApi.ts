@@ -2,6 +2,7 @@
 
 /**
  * Compacta objeto removendo undefined/null/""
+ * Útil pra montar params de query string sem lixo.
  */
 function compact(obj: Record<string, any>): Record<string, any> {
     return Object.fromEntries(
@@ -12,14 +13,14 @@ function compact(obj: Record<string, any>): Record<string, any> {
 }
 
 /* ============================================================================
-   Datas (se você precisar no futuro)
-   - Mantendo helpers iguais ao MotoTrack para padrão PT-BR
+   Datas (helpers PT-BR, se você precisar no futuro)
    ============================================================================ */
 
 const pad2 = (v: number | string) => String(v).padStart(2, "0");
 const pad4 = (v: number | string) => String(v).padStart(4, "0");
 
-/** Tenta criar um Date a partir de:
+/**
+ * Tenta criar um Date a partir de:
  *  - Date
  *  - "dd/MM/yyyy HH:mm[:ss]"
  *  - "dd/MM/yyyy"
@@ -90,8 +91,9 @@ function toPtBrDateTime(input?: string | Date): string | undefined {
 
 /* ============================================================================
    Filtro de Clientes – GET /api/v1/Cliente
-   fields: nome, email, profissaoAtual, competencias
-   paginação: page, pageSize
+   OpenAPI atual documenta page e pageSize.
+   Os campos nome/email/profissaoAtual/competencias são opcionais e só
+   serão usados se você implementar filtros no backend.
    ============================================================================ */
 
 export type FiltroClientes = {
@@ -101,25 +103,28 @@ export type FiltroClientes = {
     competencias?: string;
     page?: number;
     pageSize?: number;
-    sort?: string; // se você criar ordenação no back depois (ex: "nome,asc")
+    sort?: string; // ex.: "nome,asc"
 };
 
 export function montarParamsClientes(f: FiltroClientes = {}) {
     return compact({
+        // Campos de filtro (caso o backend passe a aceitar)
         nome: f.nome,
         email: f.email,
         profissaoAtual: f.profissaoAtual,
         competencias: f.competencias,
+        // Paginação (documentada no OpenAPI)
         page: f.page,
         pageSize: f.pageSize,
+        // Ordenação opcional
         sort: f.sort,
     });
 }
 
 /* ============================================================================
    Filtro de Jobs – GET /api/v1/Job
-   fields: titulo, empresa, requisitos
-   paginação: page, pageSize
+   OpenAPI atual documenta page e pageSize.
+   titulo/empresa/requisitos são filtros extras opcionais.
    ============================================================================ */
 
 export type FiltroJobs = {
@@ -144,7 +149,7 @@ export function montarParamsJobs(f: FiltroJobs = {}) {
 
 /* ============================================================================
    Filtro de Recomendações – GET /api/v1/recomendacao/jobs/{clienteId}
-   aqui só temos topN como query; clienteId vai na rota
+   No OpenAPI, só existe topN como query; clienteId vai na rota.
    ============================================================================ */
 
 export type FiltroRecomendacaoJobs = {
@@ -159,7 +164,7 @@ export function montarParamsRecomendacaoJobs(
     });
 }
 
-/* Exports utilitários (se precisar) */
+/* Exports utilitários de data (se precisar em outras telas) */
 export const DateUtilsSkillBridgePtBr = {
     toDateSafe,
     toPtBrDate,

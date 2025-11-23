@@ -87,33 +87,27 @@ export default function HomeScreen(): JSX.Element {
             style={[
                 globalStyles.container,
                 globalStyles.homeContainer,
-                { backgroundColor: colors.background },
+                t.screenBackground,
             ]}
         >
             <KeyboardAvoidingView
-                style={{ flex: 1 }}
+                style={globalStyles.screenFill}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={20}
             >
-                <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+                <ScrollView contentContainerStyle={globalStyles.homeScrollContent}>
                     {/* Cabeçalho */}
-                    <View style={[globalStyles.homeHeader, { marginBottom: 8 }]}>
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 8,
-                            }}
-                        >
+                    <View style={globalStyles.homeHeaderContainer}>
+                        <View style={globalStyles.homeHeaderRow}>
                             <Ionicons
                                 name="briefcase-outline"
                                 size={26}
-                                color={colors.text}
+                                color={t.headerIcon.color}
                             />
                             <Text
                                 style={[
                                     globalStyles.title,
-                                    { color: colors.text },
+                                    t.titleText,
                                 ]}
                             >
                                 SkillBridge
@@ -123,33 +117,37 @@ export default function HomeScreen(): JSX.Element {
 
                     {/* Grid de Módulos */}
                     <View style={globalStyles.homeGrid}>
-                        {/* .NET CRUD principal (só navegação, sem contadores) */}
+                        {/* .NET CRUD principal (Clientes) */}
                         <Tile
                             label="Clientes"
-                            onPress={() => router.push("/clients")}
+                            // 👉 agora vai direto para a tela de lista
+                            onPress={() => router.push("/clients/list")}
                             Icon={() => (
                                 <Feather
                                     name="user"
                                     size={28}
-                                    color={colors.buttonText ?? "#fff"}
+                                    color={t.homeTileIcon.color}
                                 />
                             )}
                             t={t}
                         />
 
+                        {/* Vagas */}
                         <Tile
                             label="Vagas"
-                            onPress={() => router.push("/jobs")}
+                            // idem: rota da lista de vagas
+                            onPress={() => router.push("/jobs/list")}
                             Icon={() => (
                                 <Feather
                                     name="briefcase"
                                     size={28}
-                                    color={colors.buttonText ?? "#fff"}
+                                    color={t.homeTileIcon.color}
                                 />
                             )}
                             t={t}
                         />
 
+                        {/* Recomendações */}
                         <Tile
                             label="Recomendações"
                             onPress={() => router.push("/recomendacao")}
@@ -157,7 +155,7 @@ export default function HomeScreen(): JSX.Element {
                                 <MaterialCommunityIcons
                                     name="lightbulb-on-outline"
                                     size={28}
-                                    color={colors.buttonText ?? "#fff"}
+                                    color={t.homeTileIcon.color}
                                 />
                             )}
                             t={t}
@@ -171,7 +169,7 @@ export default function HomeScreen(): JSX.Element {
                                 <MaterialCommunityIcons
                                     name="file-document-edit-outline"
                                     size={28}
-                                    color={colors.buttonText ?? "#fff"}
+                                    color={t.homeTileIcon.color}
                                 />
                             )}
                             t={t}
@@ -184,7 +182,7 @@ export default function HomeScreen(): JSX.Element {
                                 <MaterialCommunityIcons
                                     name="school-outline"
                                     size={28}
-                                    color={colors.buttonText ?? "#fff"}
+                                    color={t.homeTileIcon.color}
                                 />
                             )}
                             t={t}
@@ -197,14 +195,11 @@ export default function HomeScreen(): JSX.Element {
                                 <Feather
                                     name="message-circle"
                                     size={28}
-                                    color={colors.buttonText ?? "#fff"}
+                                    color={t.homeTileIcon.color}
                                 />
                             )}
                             t={t}
                         />
-
-
-
 
                         {/* Sobre */}
                         <Tile
@@ -214,7 +209,7 @@ export default function HomeScreen(): JSX.Element {
                                 <MaterialCommunityIcons
                                     name="information-outline"
                                     size={28}
-                                    color={colors.buttonText ?? "#fff"}
+                                    color={t.homeTileIcon.color}
                                 />
                             )}
                             t={t}
@@ -222,7 +217,7 @@ export default function HomeScreen(): JSX.Element {
                     </View>
 
                     {/* Conta / Ações do usuário */}
-                    <View style={[t.accountSection, { marginTop: 12 }]}>
+                    <View style={t.accountSection}>
                         <Text
                             style={[
                                 globalStyles.text,

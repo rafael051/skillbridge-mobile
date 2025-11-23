@@ -8,15 +8,22 @@ import { StyleSheet, TextStyle, ViewStyle } from "react-native";
 interface GlobalStyles {
     hintText: TextStyle;
     container: ViewStyle;
+    screenTop: ViewStyle;
+    screenFill: ViewStyle;
+
     inputContainer: ViewStyle;
     inputLabel: TextStyle;
     input: TextStyle & ViewStyle;
     button: ViewStyle;
     buttonText: TextStyle;
+    smallButtonText: TextStyle;
+    headerButtonText: TextStyle;
 
     title: TextStyle;
     subtitle: TextStyle;
     text: TextStyle;
+    textCenter: TextStyle;
+    textSmallMargin: TextStyle;
 
     card: ViewStyle;
     cardPlaca: TextStyle;
@@ -34,13 +41,19 @@ interface GlobalStyles {
     langText: TextStyle;
 
     homeContainer: ViewStyle;
+    homeHeaderContainer: ViewStyle;
     homeHeader: ViewStyle;
+    homeHeaderRow: ViewStyle;
     homeStatusRow: ViewStyle;
     homeStatusDot: ViewStyle;
     homeLinkBtn: ViewStyle;
     homeCardsWrap: ViewStyle;
     homeCard: ViewStyle;
     homeFooter: ViewStyle;
+    homeScrollContent: ViewStyle;
+
+    listContainer: ViewStyle;
+    jobsHeader: ViewStyle;
 
     homeGrid: ViewStyle;
     homeTile: ViewStyle;
@@ -61,13 +74,17 @@ interface GlobalStyles {
 }
 
 const globalStyles = StyleSheet.create<GlobalStyles>({
-    // ============================
     // 📦 Containers
-    // ============================
     container: {
         flex: 1,
         padding: 24,
         justifyContent: "center",
+    },
+    screenTop: {
+        justifyContent: "flex-start",
+    },
+    screenFill: {
+        flex: 1,
     },
     authContainer: {
         width: "100%",
@@ -75,9 +92,7 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         alignSelf: "center",
     },
 
-    // ============================
     // ✏️ Inputs
-    // ============================
     inputContainer: { marginBottom: 16 },
     inputLabel: {
         marginBottom: 6,
@@ -93,9 +108,7 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         marginBottom: 14,
     },
 
-    // ============================
-    // 🔘 Botões
-    // ============================
+    // 🔘 Botões (base neutra)
     button: {
         marginVertical: 14,
         paddingVertical: 14,
@@ -115,10 +128,19 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         fontWeight: "700",
         letterSpacing: 0.5,
     },
+    smallButtonText: {
+        fontSize: 14,
+        fontWeight: "700",
+        letterSpacing: 0.3,
+    },
+    headerButtonText: {
+        fontSize: 15,
+        fontWeight: "700",
+        letterSpacing: 0.3,
+        textAlign: "center",
+    },
 
-    // ============================
     // 🌐 Botões de idioma
-    // ============================
     rowCenter: {
         flexDirection: "row",
         justifyContent: "center",
@@ -139,9 +161,7 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         color: "#fff",
     },
 
-    // ============================
     // 🔤 Tipografia
-    // ============================
     title: {
         fontSize: 26,
         fontWeight: "700",
@@ -159,10 +179,14 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         fontSize: 16,
         lineHeight: 22,
     },
+    textCenter: {
+        textAlign: "center",
+    },
+    textSmallMargin: {
+        marginBottom: 2,
+    },
 
-    // ============================
     // 🃏 Cards
-    // ============================
     card: {
         padding: 20,
         borderRadius: 16,
@@ -183,9 +207,7 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         marginBottom: 4,
     },
 
-    // ============================
     // 📑 Headers
-    // ============================
     header: {
         height: 56,
         justifyContent: "center",
@@ -197,9 +219,7 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         fontSize: 20,
     },
 
-    // ============================
     // 🌐 Auxiliares
-    // ============================
     link: {
         marginTop: 20,
         alignSelf: "center",
@@ -212,11 +232,15 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         fontSize: 14,
     },
 
-    // ============================
     // 🏠 Home (Dashboard)
-    // ============================
     homeContainer: { flex: 1, paddingHorizontal: 16, gap: 12 },
+    homeHeaderContainer: { marginBottom: 8 },
     homeHeader: { marginTop: 12, gap: 4 },
+    homeHeaderRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
     homeStatusRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -245,10 +269,23 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
         borderRadius: 12,
     },
     homeFooter: { paddingBottom: 16, alignItems: "center" },
+    homeScrollContent: {
+        paddingBottom: 24,
+    },
 
-    // ============================
+    // container padrão de listas
+    listContainer: {
+        flex: 1,
+        marginTop: 16,
+    },
+
+    // header específico da tela de vagas (pode ser usado em outras listas também)
+    jobsHeader: {
+        marginBottom: 8,
+        alignItems: "center",
+    },
+
     // 🟥 Grid e Tiles
-    // ============================
     homeGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
@@ -273,15 +310,14 @@ const globalStyles = StyleSheet.create<GlobalStyles>({
     homeTileCount: { fontSize: 28, fontWeight: "700" },
     homeTileLabel: { fontSize: 14, fontWeight: "500", opacity: 0.95 },
 
+    // texto auxiliar menor
     hintText: {
         fontSize: 12,
         lineHeight: 18,
         marginTop: 6,
     },
 
-    // ============================
     // 🧾 Preview (Currículo / Explicação / Plano)
-    // ============================
     previewContainer: {
         flex: 1,
         padding: 0,
@@ -339,30 +375,52 @@ export const listStyles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         gap: 12,
-        marginTop: 8,
+        marginTop: 16,
+        marginBottom: 4,
     },
-    rowButton: {
+    // usado para botões lado a lado (como na tela de recomendação e na lista de vagas)
+    topButton: {
         flex: 1,
         marginVertical: 0,
+        paddingVertical: 12,
+        paddingHorizontal: 12,
     },
+    topButtonPrimary: {},
+    topButtonSecondary: {},
+
     cardOutlined: {
         padding: 18,
         borderRadius: 16,
         borderWidth: 1,
     },
+
     rowItem: {
         flexDirection: "row",
-        alignItems: "center",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
         gap: 12,
-        padding: 14,
+        padding: 16,
         borderWidth: 1,
-        borderRadius: 12,
+        borderRadius: 16,
+        shadowColor: "#020617",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 6,
+        elevation: 3,
+    },
+    rowItemTextCol: {
+        flex: 1,
+    },
+    rowActions: {
+        justifyContent: "space-between",
+        alignItems: "stretch",
+        gap: 8,
     },
     smallBtn: {
         minHeight: 40,
         paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 10,
+        paddingHorizontal: 14,
+        borderRadius: 12,
         borderWidth: 1,
         alignItems: "center",
         justifyContent: "center",
@@ -370,11 +428,28 @@ export const listStyles = StyleSheet.create({
     smallBtnDanger: {
         minHeight: 40,
         paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 10,
+        paddingHorizontal: 14,
+        borderRadius: 12,
         borderWidth: 1,
         alignItems: "center",
         justifyContent: "center",
+    },
+    smallBtnDisabled: {
+        opacity: 0.6,
+    },
+    listSeparator: {
+        height: 12,
+    },
+    listContent: {
+        paddingVertical: 4,
+    },
+    listContentEmpty: {
+        paddingVertical: 0,
+    },
+    // label de resultado da tela de recomendação
+    resultLabel: {
+        marginBottom: 8,
+        textAlign: "left",
     },
 });
 
@@ -399,10 +474,44 @@ export const formStyles = StyleSheet.create({
 ============================================================ */
 export const themedStyles = (colors: any) =>
     StyleSheet.create({
+        // Fundo padrão da tela
+        screenBackground: {
+            backgroundColor: colors.background,
+        },
+
+        // Tipografia temática
+        titleText: {
+            color: colors.text,
+        },
+        regularText: {
+            color: colors.text,
+        },
+        mutedText: {
+            color: colors.mutedText ?? "#6B7280",
+        },
+
         errorText: {
-            color: colors.error ?? "#FB7185",
+            color: colors.error ?? colors.dangerBorder ?? "#FB7185",
             marginTop: 8,
         },
+
+        // Inputs temáticos
+        inputBase: {
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+            color: colors.text,
+        },
+        inputError: {
+            borderColor: colors.dangerBorder ?? "#EF4444",
+        },
+
+        // Card de formulário genérico (como na tela de recomendação)
+        formCard: {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+        },
+
+        // Seção de conta (home)
         accountSection: {
             gap: 12,
             marginTop: 12,
@@ -412,7 +521,12 @@ export const themedStyles = (colors: any) =>
             textAlign: "center",
         },
 
-        // 🔹 Botão primário (azul)
+        // Ícone do cabeçalho da Home
+        headerIcon: {
+            color: colors.text,
+        },
+
+        // Botões genéricos
         btnPrimary: {
             backgroundColor: colors.button ?? colors.primary ?? "#0EA5E9",
             borderWidth: 0,
@@ -421,8 +535,6 @@ export const themedStyles = (colors: any) =>
         btnPrimaryText: {
             color: colors.buttonText ?? colors.onPrimary ?? "#F9FAFB",
         },
-
-        // 🔹 Botão secundário (outline) — "Limpar"
         btnSecondary: {
             backgroundColor: "transparent",
             borderWidth: 1,
@@ -432,14 +544,12 @@ export const themedStyles = (colors: any) =>
         btnSecondaryText: {
             color: colors.button ?? colors.primary ?? "#0EA5E9",
         },
-
         btnWarning: {
             backgroundColor: colors.warning ?? "#F97316",
         },
         btnWarningText: {
             color: colors.onWarning ?? "#111827",
         },
-
         btnDangerOutline: {
             backgroundColor: colors.background,
             borderWidth: 2,
@@ -450,6 +560,7 @@ export const themedStyles = (colors: any) =>
             color: colors.danger ?? "#EF4444",
         },
 
+        // Tiles do dashboard
         homeTileSurface: {
             backgroundColor: colors.button,
             borderColor: colors.mode === "dark" ? "#FFFFFF22" : "#00000010",
@@ -458,8 +569,12 @@ export const themedStyles = (colors: any) =>
         homeTileText: {
             color: colors.buttonText ?? "#FFFFFF",
         },
+        // Cor padrão dos ícones das tiles
+        homeTileIcon: {
+            color: colors.buttonText ?? colors.onPrimary ?? "#F9FAFB",
+        },
 
-        // 🎨 Preview temática
+        // Preview
         previewBackground: {
             backgroundColor: colors.background,
         },
@@ -478,8 +593,74 @@ export const themedStyles = (colors: any) =>
         previewActionTextColor: {
             color: colors.buttonText ?? "#FFFFFF",
         },
-        // 🔄 Cor do spinner do preview
         previewLoaderSpinner: {
             color: colors.button ?? colors.primary ?? "#0EA5E9",
+        },
+
+        /* 🎯 Tela de Vagas (Jobs / Clientes / Recomendações) */
+        jobsTopButtonSecondary: {
+            backgroundColor: "#FFFFFF",
+            borderWidth: 1,
+            borderColor:
+                colors.mode === "dark"
+                    ? "#E5E7EB"
+                    : colors.border ?? "#E5E7EB",
+        },
+        jobsTopButtonSecondaryText: {
+            color:
+                colors.mode === "dark"
+                    ? "#0F172A"
+                    : colors.text ?? "#111827",
+        },
+        jobsTopButtonPrimary: {
+            backgroundColor: colors.button ?? colors.primary ?? "#0EA5E9",
+        },
+        jobsTopButtonPrimaryText: {
+            color: colors.buttonText ?? colors.onPrimary ?? "#F9FAFB",
+        },
+
+        // Card externo que envolve a FlatList
+        jobsListCard: {
+            backgroundColor: colors.mode === "dark" ? "#020617" : "#FFFFFF",
+            borderColor: colors.mode === "dark" ? "#1E293B" : "#E5E7EB",
+        },
+
+        // Card individual da vaga/cliente (azul escuro)
+        jobsCardContainer: {
+            backgroundColor: "#021B3A",
+            borderColor: "#0B3255",
+        },
+        jobsCardTitleText: {
+            color: "#F9FAFB",
+        },
+        jobsCardTextStrong: {
+            color: "#E5E7EB",
+        },
+        jobsCardTextMuted: {
+            color: "#CBD5F5",
+        },
+
+        // Botões dentro do card
+        jobsCardEditBtn: {
+            backgroundColor: "#FFFFFF",
+            borderWidth: 1,
+            borderColor:
+                colors.mode === "dark"
+                    ? "#E5E7EB"
+                    : colors.border ?? "#E5E7EB",
+        },
+        jobsCardEditText: {
+            color:
+                colors.mode === "dark"
+                    ? "#0F172A"
+                    : colors.text ?? "#111827",
+        },
+        jobsCardDeleteBtn: {
+            backgroundColor: "#EF4444",
+            borderWidth: 1,
+            borderColor: "#EF4444",
+        },
+        jobsCardDeleteText: {
+            color: "#FEE2E2",
         },
     });
