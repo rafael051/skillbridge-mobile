@@ -378,6 +378,15 @@ export const listStyles = StyleSheet.create({
         marginTop: 16,
         marginBottom: 4,
     },
+
+    // ✅ NOVO: usado para botões lado a lado (ex.: Gerar / Limpar na CurriculoScreen)
+    rowButton: {
+        flex: 1,
+        marginVertical: 0,
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+    },
+
     // usado para botões lado a lado (como na tela de recomendação e na lista de vagas)
     topButton: {
         flex: 1,

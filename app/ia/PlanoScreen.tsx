@@ -203,16 +203,22 @@ export default function PlanoScreen() {
         try {
             console.log("📨 Enviando para /gen/plan:", payload);
 
-            // 👉 AGORA A API JÁ DEVOLVE HTML PRONTO
+            // 👉 API devolve HTML pronto
             const html: PlanHtmlResponse = await SkillBridgeIA.gerarPlano(payload);
 
             console.log("✅ HTML /gen/plan recebido, tamanho:", html?.length);
 
             setHtmlPlanoGerado(html);
 
+            // 👉 Redireciona automaticamente para o preview
+            router.push({
+                pathname: "/ia/plan-preview",
+                params: { html },
+            });
+
             Alert.alert(
                 "Plano gerado",
-                "Plano de carreira gerado pela API. Toque em 'Ver plano em tela cheia' para visualizar."
+                "Plano de carreira gerado e aberto em tela cheia."
             );
         } catch (e: any) {
             const msg =
@@ -268,54 +274,82 @@ export default function PlanoScreen() {
        ===================================================================== */
     return (
         <SafeAreaView
-            style={[globalStyles.container, { backgroundColor: colors.background }]}
+            style={[
+                globalStyles.screenFill,
+                { backgroundColor: colors.background },
+            ]}
         >
             <KeyboardAvoidingView
+                style={globalStyles.screenFill}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
-                <ScrollView>
+                <ScrollView
+                    contentContainerStyle={[
+                        globalStyles.screenTop,
+                        { paddingHorizontal: 24, paddingBottom: 24 },
+                    ]}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Header: Voltar + tema */}
+                    <View style={{ marginBottom: 12 }}>
+                        <View
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                marginBottom: 8,
+                            }}
+                        >
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Voltar para a tela anterior"
+                                android_ripple={{ color: colors.ripple }}
+                                onPress={() => router.back()}
+                                style={[
+                                    globalStyles.button,
+                                    themeStyles.btnSecondary,
+                                    {
+                                        alignSelf: "flex-start",
+                                        paddingHorizontal: 18,
+                                        marginVertical: 0,
+                                    },
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        globalStyles.buttonText,
+                                        themeStyles.btnSecondaryText,
+                                    ]}
+                                >
+                                    ← Voltar
+                                </Text>
+                            </Pressable>
 
-                    {/* Botão Voltar */}
-                    <View style={{ marginBottom: 8 }}>
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Voltar para a tela anterior"
-                            android_ripple={{ color: colors.ripple }}
-                            onPress={() => router.back()}
+                            <ThemeToggleButton />
+                        </View>
+
+                        {/* Título */}
+                        <Text
                             style={[
-                                globalStyles.button,
-                                themeStyles.btnSecondary,
+                                globalStyles.title,
+                                { color: colors.text, marginBottom: 4 },
+                            ]}
+                        >
+                            {tituloPagina}
+                        </Text>
+                        <Text
+                            style={[
+                                globalStyles.text,
                                 {
-                                    alignSelf: "flex-start",
-                                    paddingHorizontal: 18,
-                                    marginVertical: 0,
+                                    color: colors.mutedText,
+                                    textAlign: "center",
                                 },
                             ]}
                         >
-                            <Text
-                                style={[
-                                    globalStyles.buttonText,
-                                    themeStyles.btnSecondaryText,
-                                ]}
-                            >
-                                ← Voltar
-                            </Text>
-                        </Pressable>
+                            Preencha os dados abaixo para montar um plano de carreira /
+                            requalificação personalizado.
+                        </Text>
                     </View>
-
-                    {/* Título */}
-                    <Text style={[globalStyles.title, { color: colors.text }]}>
-                        {tituloPagina}
-                    </Text>
-                    <Text
-                        style={[
-                            globalStyles.text,
-                            { color: colors.mutedText, textAlign: "center" },
-                        ]}
-                    >
-                        Preencha os dados abaixo para montar um plano de carreira /
-                        requalificação personalizado.
-                    </Text>
 
                     {/* Card do formulário */}
                     <View
@@ -807,11 +841,6 @@ export default function PlanoScreen() {
                                 </Pressable>
                             </View>
                         )}
-                    </View>
-
-                    {/* Rodapé - Alternar tema */}
-                    <View style={globalStyles.homeFooter}>
-                        <ThemeToggleButton />
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>

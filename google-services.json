@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1080842797600",
+    "project_id": "skillbridge-64696",
+    "storage_bucket": "skillbridge-64696.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080842797600:android:72732c9a8477ba490d3245",
+        "android_client_info": {
+          "package_name": "com.rafael51.skillbridgemobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjR_wR7Zd8_54X3vQNr0nGJBJlo8hZYno"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

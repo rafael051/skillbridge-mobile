@@ -93,7 +93,8 @@ export default function ExplainScreen() {
         }
 
         if (!tipo) {
-            newErrors.tipo = 'Informe o tipo de contexto (ex.: "plano_requalificacao").';
+            newErrors.tipo =
+                'Informe o tipo de contexto (ex.: "plano_requalificacao").';
             hasError = true;
         }
 
@@ -152,9 +153,15 @@ export default function ExplainScreen() {
             const html = resp || "";
             setHtmlGerado(html);
 
+            // 👉 Redireciona automaticamente para o preview
+            router.push({
+                pathname: "/ia/explain-preview",
+                params: { html },
+            });
+
             Alert.alert(
                 "Explicação gerada",
-                "A explicação foi gerada. Toque em 'Ver explicação em tela cheia' para visualizar/imprimir."
+                "A explicação foi gerada e aberta em tela cheia."
             );
         } catch (e: any) {
             const msg =
@@ -206,54 +213,81 @@ export default function ExplainScreen() {
        ===================================================================== */
     return (
         <SafeAreaView
-            style={[globalStyles.container, { backgroundColor: colors.background }]}
+            style={[
+                globalStyles.screenFill,
+                { backgroundColor: colors.background },
+            ]}
         >
             <KeyboardAvoidingView
+                style={globalStyles.screenFill}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
-                <ScrollView>
+                <ScrollView
+                    contentContainerStyle={[
+                        globalStyles.screenTop,
+                        { paddingHorizontal: 24, paddingBottom: 24 },
+                    ]}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Header: Voltar + tema */}
+                    <View style={{ marginBottom: 12 }}>
+                        <View
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                marginBottom: 8,
+                            }}
+                        >
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Voltar para a tela anterior"
+                                android_ripple={{ color: colors.ripple }}
+                                onPress={() => router.back()}
+                                style={[
+                                    globalStyles.button,
+                                    themeStyles.btnSecondary,
+                                    {
+                                        alignSelf: "flex-start",
+                                        paddingHorizontal: 18,
+                                        marginVertical: 0,
+                                    },
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        globalStyles.buttonText,
+                                        themeStyles.btnSecondaryText,
+                                    ]}
+                                >
+                                    ← Voltar
+                                </Text>
+                            </Pressable>
 
-                    {/* Botão Voltar (mesmo padrão do CurriculoScreen) */}
-                    <View style={{ marginBottom: 8 }}>
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Voltar para a tela anterior"
-                            android_ripple={{ color: colors.ripple }}
-                            onPress={() => router.back()}
+                            <ThemeToggleButton />
+                        </View>
+
+                        <Text
                             style={[
-                                globalStyles.button,
-                                themeStyles.btnSecondary,
+                                globalStyles.title,
+                                { color: colors.text, marginBottom: 4 },
+                            ]}
+                        >
+                            {tituloPagina}
+                        </Text>
+                        <Text
+                            style={[
+                                globalStyles.text,
                                 {
-                                    alignSelf: "flex-start",
-                                    paddingHorizontal: 18,
-                                    marginVertical: 0,
+                                    color: colors.mutedText,
+                                    textAlign: "center",
                                 },
                             ]}
                         >
-                            <Text
-                                style={[
-                                    globalStyles.buttonText,
-                                    themeStyles.btnSecondaryText,
-                                ]}
-                            >
-                                ← Voltar
-                            </Text>
-                        </Pressable>
+                            Preencha os dados abaixo para gerar uma explicação
+                            humanizada (coach) baseada no perfil da pessoa.
+                        </Text>
                     </View>
-
-                    {/* Título */}
-                    <Text style={[globalStyles.title, { color: colors.text }]}>
-                        {tituloPagina}
-                    </Text>
-                    <Text
-                        style={[
-                            globalStyles.text,
-                            { color: colors.mutedText, textAlign: "center" },
-                        ]}
-                    >
-                        Preencha os dados abaixo para gerar uma explicação
-                        humanizada (coach) baseada no perfil da pessoa.
-                    </Text>
 
                     {/* Card do formulário */}
                     <View
@@ -608,11 +642,6 @@ export default function ExplainScreen() {
                                 </Pressable>
                             </View>
                         )}
-                    </View>
-
-                    {/* Rodapé - Alternar tema */}
-                    <View style={globalStyles.homeFooter}>
-                        <ThemeToggleButton />
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>

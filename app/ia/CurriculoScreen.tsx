@@ -12,6 +12,7 @@ import {
     ScrollView,
 } from "react-native";
 import { router } from "expo-router";
+
 import { useTheme } from "../../src/context/ThemeContext";
 import globalStyles, {
     formStyles,
@@ -26,8 +27,8 @@ import {
 } from "../../src/services/skillbridgeAiApi";
 
 /* ============================================================================
-// Utils simples
-============================================================================ */
+ * Utils simples
+ * ========================================================================== */
 const sanitize = (t?: string) => (t ?? "").replace(/[“”"']/g, "").trim();
 const extractDigits = (t?: string) => (t ?? "").replace(/\D/g, "");
 
@@ -38,8 +39,8 @@ const isValidEmail = (email?: string) => {
 };
 
 /* ============================================================================
-// CurriculoScreen
-============================================================================ */
+ * CurriculoScreen
+ * ========================================================================== */
 export default function CurriculoScreen() {
     const { colors } = useTheme();
     const themeStyles = themedStyles(colors);
@@ -78,9 +79,9 @@ export default function CurriculoScreen() {
 
     const tituloPagina = "📄 Montar Currículo";
 
-    /* ========================================================================
-       Gerar currículo chamando a API /gen/cv/html
-       ===================================================================== */
+    /* ============================================================================
+     * Gerar currículo chamando a API /gen/cv/html
+     * ========================================================================== */
     const gerarCurriculo = async () => {
         setFieldErrors({});
         setErro(null);
@@ -155,9 +156,8 @@ export default function CurriculoScreen() {
 
             console.log("📨 Enviando para /gen/cv/html:", payload);
 
-            const resp: CvHtmlResponse = await SkillBridgeIA.gerarCurriculoHtml(
-                payload
-            );
+            const resp: CvHtmlResponse =
+                await SkillBridgeIA.gerarCurriculoHtml(payload);
 
             console.log("✅ Resposta /gen/cv/html (string HTML):", resp);
 
@@ -197,9 +197,10 @@ export default function CurriculoScreen() {
         setHtmlGerado(null);
     };
 
-    /* ========================================================================
-       Abrir preview em tela cheia (WebView em /cv-preview)
-       ===================================================================== */
+    /* ============================================================================
+     * Abrir preview em tela cheia (WebView em /cv-preview)
+     *  👉 Certifique-se de ter o arquivo app/cv-preview.tsx ou app/cv-preview/index.tsx
+     * ========================================================================== */
     const abrirPreview = () => {
         if (!htmlGerado) {
             Alert.alert(
@@ -210,63 +211,91 @@ export default function CurriculoScreen() {
         }
 
         router.push({
-            pathname: "/cv-preview",
+            pathname: "ia/cv-preview",
             params: { html: htmlGerado },
         });
     };
 
-    /* ========================================================================
-       Render
-       ===================================================================== */
+    /* ============================================================================
+     * Render
+     * ========================================================================== */
     return (
         <SafeAreaView
-            style={[globalStyles.container, { backgroundColor: colors.background }]}
+            style={[
+                globalStyles.screenFill,
+                { backgroundColor: colors.background },
+            ]}
         >
             <KeyboardAvoidingView
+                style={globalStyles.screenFill}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
-                <ScrollView>
+                <ScrollView
+                    contentContainerStyle={[
+                        globalStyles.screenTop,
+                        { paddingHorizontal: 24, paddingBottom: 24 },
+                    ]}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Header: Voltar + título + tema */}
+                    <View style={{ marginBottom: 12 }}>
+                        <View
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                marginBottom: 8,
+                            }}
+                        >
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Voltar para a tela anterior"
+                                android_ripple={{ color: colors.ripple }}
+                                onPress={() => router.back()}
+                                style={[
+                                    globalStyles.button,
+                                    themeStyles.btnSecondary,
+                                    {
+                                        alignSelf: "flex-start",
+                                        paddingHorizontal: 18,
+                                        marginVertical: 0,
+                                    },
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        globalStyles.buttonText,
+                                        themeStyles.btnSecondaryText,
+                                    ]}
+                                >
+                                    ← Voltar
+                                </Text>
+                            </Pressable>
 
-                    {/* Botão Voltar */}
-                    <View style={{ marginBottom: 8 }}>
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Voltar para a tela anterior"
-                            android_ripple={{ color: colors.ripple }}
-                            onPress={() => router.back()}
+                            <ThemeToggleButton />
+                        </View>
+
+                        <Text
                             style={[
-                                globalStyles.button,
-                                themeStyles.btnSecondary,
+                                globalStyles.title,
+                                { color: colors.text, marginBottom: 4 },
+                            ]}
+                        >
+                            {tituloPagina}
+                        </Text>
+                        <Text
+                            style={[
+                                globalStyles.text,
                                 {
-                                    alignSelf: "flex-start",
-                                    paddingHorizontal: 18,
-                                    marginVertical: 0,
+                                    color: colors.mutedText,
+                                    textAlign: "center",
                                 },
                             ]}
                         >
-                            <Text
-                                style={[
-                                    globalStyles.buttonText,
-                                    themeStyles.btnSecondaryText,
-                                ]}
-                            >
-                                ← Voltar
-                            </Text>
-                        </Pressable>
+                            Preencha os dados abaixo para montar seu currículo
+                            com ajuda da IA.
+                        </Text>
                     </View>
-
-                    {/* Título */}
-                    <Text style={[globalStyles.title, { color: colors.text }]}>
-                        {tituloPagina}
-                    </Text>
-                    <Text
-                        style={[
-                            globalStyles.text,
-                            { color: colors.mutedText, textAlign: "center" },
-                        ]}
-                    >
-                        Preencha os dados abaixo para montar seu currículo com ajuda da IA.
-                    </Text>
 
                     {/* Card do formulário */}
                     <View
@@ -282,7 +311,10 @@ export default function CurriculoScreen() {
                             <Text
                                 style={[
                                     globalStyles.text,
-                                    { color: colors.dangerBorder, marginBottom: 8 },
+                                    {
+                                        color: colors.dangerBorder,
+                                        marginBottom: 8,
+                                    },
                                 ]}
                             >
                                 {erro}
@@ -682,11 +714,6 @@ export default function CurriculoScreen() {
                                 </Pressable>
                             </View>
                         )}
-                    </View>
-
-                    {/* Rodapé - Alternar tema */}
-                    <View style={globalStyles.homeFooter}>
-                        <ThemeToggleButton />
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
